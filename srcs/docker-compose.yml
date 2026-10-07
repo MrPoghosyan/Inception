@@ -1,0 +1,184 @@
+services:
+  mariadb:
+    build:
+      context: ./requirements/mariadb
+    image: mariadb
+    container_name: mariadb
+    env_file: .env
+    secrets:
+      - db_password
+      - db_root_password
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - inception
+    restart: on-failure
+    expose:
+      - "3306"
+
+  redis:
+    build:
+      context: ./requirements/bonus/redis
+    image: redis
+    container_name: redis
+    secrets:
+      - redis_password
+    networks:
+      - inception
+    restart: on-failure
+    expose:
+      - "6379"
+
+  wordpress:
+    build:
+      context: ./requirements/wordpress
+    image: wordpress
+    container_name: wordpress
+    env_file: .env
+    secrets:
+      - db_password
+      - wp_admin_password
+      - wp_user_password
+      - redis_password
+    volumes:
+      - wp_data:/var/www/html
+    depends_on:
+      - mariadb
+      - redis
+    networks:
+      - inception
+    restart: on-failure
+    expose:
+      - "9000"
+
+  nginx:
+    build:
+      context: ./requirements/nginx
+    image: nginx
+    container_name: nginx
+    env_file: .env
+    volumes:
+      - wp_data:/var/www/html
+    ports:
+      - "443:443"
+    depends_on:
+      - wordpress
+    networks:
+      - inception
+    restart: on-failure
+
+  ftp:
+    build:
+      context: ./requirements/bonus/ftp
+    image: ftp
+    container_name: ftp
+    env_file: .env
+    secrets:
+      - ftp_password
+    volumes:
+      - wp_data:/var/www/html
+    ports:
+      - "21:21"
+      - "21100-21110:21100-21110"
+    depends_on:
+      - wordpress
+    networks:
+      - inception
+    restart: on-failure
+
+  static-site:
+    build:
+      context: ./requirements/bonus/static-site
+    image: static-site
+    container_name: static-site
+    networks:
+      - inception
+    restart: on-failure
+    ports:
+      - "8080:8080"
+
+  adminer:
+    build:
+      context: ./requirements/bonus/adminer
+    image: adminer
+    container_name: adminer
+    depends_on:
+      - mariadb
+    networks:
+      - inception
+    restart: on-failure
+    ports:
+      - "8081:8081"
+
+  backup:
+    build:
+      context: ./requirements/bonus/backup
+    image: backup
+    container_name: backup
+    env_file: .env
+    secrets:
+      - db_password
+    volumes:
+      - backup_data:/var/backups/mariadb
+    depends_on:
+      - mariadb
+    networks:
+      - inception
+    restart: on-failure
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    profiles:
+      - cadvisor
+    privileged: true
+    ports:
+      - "8082:8082"
+    command:
+      - "-port=8082"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - inception
+    restart: on-failure
+
+volumes:
+  db_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/vapoghos/data/db
+  wp_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/vapoghos/data/wordpress
+  backup_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/vapoghos/data/backup
+
+networks:
+  inception:
+    driver: bridge
+
+secrets:
+  db_password:
+    file: ../secrets/db_password.txt
+  db_root_password:
+    file: ../secrets/db_root_password.txt
+  wp_admin_password:
+    file: ../secrets/wp_admin_password.txt
+  wp_user_password:
+    file: ../secrets/wp_user_password.txt
+  redis_password:
+    file: ../secrets/redis_password.txt
+  ftp_password:
+    file: ../secrets/ftp_password.txt
