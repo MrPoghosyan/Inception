@@ -49,25 +49,56 @@ In addition to the mandatory part, six bonus services were implemented:
 See [Instructions](#instructions) for how to start each layer independently.
 
 ## Project structure
+```text
 .
 ├── Makefile
-├── secrets/ # gitignored: passwords used as Docker secrets
-├── srcs/
-│ ├── .env # non-sensitive configuration
-│ ├── docker-compose.yml
-│ └── requirements/
-│ ├── mariadb/
-│ ├── nginx/
-│ ├── wordpress/
-│ └── bonus/
-│   ├── redis/
-│   ├── ftp/
-│   ├── static-site/
-│   ├── adminer/
-│   └── backup/
+├── README.md
 ├── USER_DOC.md
-└── DEV_DOC.md
-
+├── DEV_DOC.md
+├── secrets/                  # Gitignored Docker secrets
+│   ├── db_password.txt
+│   ├── db_root_password.txt
+│   ├── ftp_password.txt
+│   ├── redis_password.txt
+│   ├── wp_admin_password.txt
+│   └── wp_user_password.txt
+└── srcs/
+    ├── .env
+    ├── docker-compose.yml
+    └── requirements/
+        ├── mariadb/
+        │   ├── Dockerfile
+        │   ├── conf/
+        │   └── tools/
+        ├── nginx/
+        │   ├── Dockerfile
+        │   ├── conf/
+        │   └── tools/
+        ├── wordpress/
+        │   ├── Dockerfile
+        │   ├── conf/
+        │   └── tools/
+        └── bonus/
+            ├── redis/
+            │   ├── Dockerfile
+            │   ├── conf/
+            │   └── tools/
+            ├── ftp/
+            │   ├── Dockerfile
+            │   ├── conf/
+            │   └── tools/
+            ├── static-site/
+            │   ├── Dockerfile
+            │   ├── conf/
+            │   └── html/
+            ├── adminer/
+            │   ├── Dockerfile
+            │   ├── conf/
+            │   └── tools/
+            └── backup/
+                ├── Dockerfile
+                └── tools/
+```
 
 ## Instructions
 
