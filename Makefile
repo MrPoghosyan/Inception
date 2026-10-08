@@ -1,9 +1,16 @@
 NAME		= inception
 LOGIN		= vapoghos
 DATA_DIR	= /home/$(LOGIN)/data
-COMPOSE		= docker compose -f srcs/docker-compose.yml
 
-all: setup up
+COMPOSE		= docker compose -f srcs/docker-compose.yml
+PROFILE		= --profile cadvisor
+
+MANDATORY	= mariadb wordpress nginx
+IMAGES		= mariadb wordpress nginx redis ftp static-site adminer backup
+
+.PHONY: all setup up bonus bonus_cA down start stop restart logs ps clean fclean re
+
+all: up
 
 setup:
 	mkdir -p $(DATA_DIR)/db
@@ -11,39 +18,38 @@ setup:
 	mkdir -p $(DATA_DIR)/backup
 
 up: setup
-	$(COMPOSE) up -d --build mariadb wordpress nginx
+	$(COMPOSE) up -d --build $(MANDATORY)
 
 bonus: setup
 	$(COMPOSE) up -d --build
 
-bonus_cA:
-	$(COMPOSE) --profile cadvisor up -d --build cadvisor
+bonus_cA: setup
+	$(COMPOSE) $(PROFILE) up -d --build cadvisor
 
 down:
-	$(COMPOSE) down
+	$(COMPOSE) $(PROFILE) down --remove-orphans
 
 start:
-	$(COMPOSE) start
+	$(COMPOSE) $(PROFILE) start
 
 stop:
-	$(COMPOSE) stop
+	$(COMPOSE) $(PROFILE) stop
 
-restart: down up
+restart:
+	$(COMPOSE) $(PROFILE) restart
 
 logs:
-	$(COMPOSE) logs -f
+	$(COMPOSE) $(PROFILE) logs -f
 
 ps:
-	$(COMPOSE) ps -a
+	$(COMPOSE) $(PROFILE) ps -a
 
 clean: down
-	docker system prune -af
+	docker image prune -f
+	docker builder prune -f
 
 fclean: clean
-	-docker run --rm -v $(DATA_DIR):/data debian:bookworm-slim \
-		rm -rf /data/db /data/wordpress /data/backup
 	sudo rm -rf $(DATA_DIR)
+	-docker rmi -f $(IMAGES)
 
 re: fclean all
-
-.PHONY: all setup up bonus bonus_cA down stop start restart logs ps clean fclean re

@@ -67,8 +67,9 @@ the VM itself).
 - **Adminer**: `http://<host-ip>:8081`. On the login screen, use:
   - System: MySQL
   - Server: `mariadb`
-  - Username / Password: the WordPress database credentials (see below)
-  - Database: the WordPress database name (see below)
+  - Username `wp_user`
+  - Password:  cat secrets/db_password.txt
+  - Database: `wordpress`
 - **cAdvisor**: `http://<host-ip>:8082/containers/`.
 
 ## Locating and managing credentials
